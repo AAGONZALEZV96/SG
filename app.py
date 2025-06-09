@@ -9,24 +9,27 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend integration
 
-@app.route('/')
+@app.route('/dev')
 def index():
     return jsonify({"mensaje": "¡Todo está funcionando con Flask y Serverless!"})
 # DynamoDB configuration
 if os.environ.get('IS_OFFLINE'):
+    localstack_endpoint = os.environ.get('LOCALSTACK_HOSTNAME', 'localhost')
+    localstack_url = f"http://{localstack_endpoint}:4566"
+
     dynamodb_client = boto3.client(
         'dynamodb', 
-        region_name='localhost', 
-        endpoint_url='http://localhost:8000',
-        aws_access_key_id='fake',
-        aws_secret_access_key='fake'
+        region_name='us-east-1', 
+        endpoint_url=localstack_url,
+        aws_access_key_id='test',
+        aws_secret_access_key='test'
     )
     dynamodb_resource = boto3.resource(
         'dynamodb',
-        region_name='localhost',
-        endpoint_url='http://localhost:8000',
-        aws_access_key_id='fake',
-        aws_secret_access_key='fake'
+        region_name='us-east-1',
+        endpoint_url=localstack_url,
+        aws_access_key_id='test',
+        aws_secret_access_key='test'
     )
 else:
     dynamodb_client = boto3.client('dynamodb')
@@ -38,7 +41,7 @@ ATTENDANCE_TABLE = os.environ.get('ATTENDANCE_TABLE', 'attendance-table-dev')
 GRADES_TABLE = os.environ.get('GRADES_TABLE', 'grades-table-dev')
 
 # Users endpoints
-@app.route('/users/<string:user_id>')
+@app.route('/dev/users/<string:user_id>')
 def get_user(user_id):
     result = dynamodb_client.get_item(
         TableName=USERS_TABLE, Key={'userId': {'S': user_id}}
@@ -55,7 +58,7 @@ def get_user(user_id):
         'phone': item.get('phone', {}).get('S', '')
     })
 
-@app.route('/users', methods=['GET'])
+@app.route('/dev/users', methods=['GET'])
 def get_users():
     result = dynamodb_client.scan(TableName=USERS_TABLE)
     items = result.get('Items', [])
@@ -72,7 +75,7 @@ def get_users():
     
     return jsonify(users)
 
-@app.route('/users', methods=['POST'])
+@app.route('/dev/users', methods=['POST'])
 def create_user():
     data = request.json
     user_id = data.get('userId') or str(uuid.uuid4())
@@ -104,7 +107,7 @@ def create_user():
         'phone': phone
     })
 
-@app.route('/users/<string:user_id>', methods=['PUT'])
+@app.route('/dev/users/<string:user_id>', methods=['PUT'])
 def update_user(user_id):
     data = request.json
     
@@ -147,7 +150,7 @@ def update_user(user_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/users/<string:user_id>', methods=['DELETE'])
+@app.route('/dev/users/<string:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     try:
         dynamodb_client.delete_item(
@@ -159,7 +162,7 @@ def delete_user(user_id):
         return jsonify({'error': str(e)}), 500
 
 # Authentication endpoint
-@app.route('/auth/login', methods=['POST'])
+@app.route('/dev/auth/login', methods=['POST'])
 def login():
     data = request.json
     email = data.get('email')
@@ -190,7 +193,7 @@ def login():
     })
 
 # Attendance endpoints
-@app.route('/attendance', methods=['GET'])
+@app.route('/dev/attendance', methods=['GET'])
 def get_attendance():
     student_id = request.args.get('studentId')
     date = request.args.get('date')
@@ -235,7 +238,7 @@ def get_attendance():
     
     return jsonify(attendance_records)
 
-@app.route('/attendance', methods=['POST'])
+@app.route('/dev/attendance', methods=['POST'])
 def create_attendance():
     data = request.json
     attendance_id = str(uuid.uuid4())
@@ -270,7 +273,7 @@ def create_attendance():
     })
 
 # Grades endpoints
-@app.route('/grades', methods=['GET'])
+@app.route('/dev/grades', methods=['GET'])
 def get_grades():
     student_id = request.args.get('studentId')
     subject = request.args.get('subject')
@@ -311,7 +314,7 @@ def get_grades():
     
     return jsonify(grades)
 
-@app.route('/grades', methods=['POST'])
+@app.route('/dev/grades', methods=['POST'])
 def create_grade():
     data = request.json
     grade_id = str(uuid.uuid4())
