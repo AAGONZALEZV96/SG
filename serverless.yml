@@ -12,7 +12,7 @@ plugins:
   - serverless-python-requirements
   - serverless-dynamodb
   - serverless-offline
-
+  - serverless-localstack
 custom:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
@@ -44,7 +44,8 @@ custom:
       - test
     start:
       port: ${self:custom.dynamodbPorts.${self:custom.stage}, 8001}  # <-- actualizado también aquí
-      inMemory: true
+      inMemory: false
+      dbPath: ./.dynamodb/data
       heapInitial: 200m
       heapMax: 1g
       migrate: true
