@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  dynamodb-local:
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    image: "amazon/dynamodb-local:latest"
+    container_name: dynamodb-local
+    ports:
+      - "8000:8000"
+    volumes:
+      - "./docker/dynamodb:/home/dynamodblocal/data"
+    working_dir: /home/dynamodblocal
+    environment:
+      - AWS_ACCESS_KEY_ID=fake
+      - AWS_SECRET_ACCESS_KEY=fake
+      - AWS_DEFAULT_REGION=localhost
+
+  sg-backend:
+    build: .
+    container_name: sg-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - IS_OFFLINE=true
+      - USERS_TABLE=users-table-dev
+      - ATTENDANCE_TABLE=attendance-table-dev
+      - GRADES_TABLE=grades-table-dev
+    depends_on:
+      - dynamodb-local
+    volumes:
+      - .:/app
+    working_dir: /app

@@ -1,0 +1,126 @@
+<div class="container">
+  <div class="profile-header">
+    <h2>Mi Perfil</h2>
+    <p>Gestiona tu información personal</p>
+  </div>
+<!-- Control z cualquier fallo -->
+  <div class="card">
+    <div class="profile-content">
+      <div class="profile-picture-section">
+        <div class="profile-picture">
+          <img 
+            [src]="currentUser?.profilePicture || '/assets/default-avatar.png'" 
+            alt="Foto de perfil"
+            class="profile-img"
+          />
+          <div class="profile-picture-overlay" *ngIf="editing">
+            <input 
+              type="file" 
+              id="profilePicture" 
+              accept="image/*" 
+              (change)="onFileSelected($event)"
+              class="hidden-input"
+            />
+            <label for="profilePicture" class="btn btn-secondary btn-sm">
+              Cambiar Foto
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-form-section">
+        <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label class="form-label" for="name">Nombre Completo</label>
+            <input
+              type="text"
+              id="name"
+              formControlName="name"
+              class="form-control"
+              [class.is-invalid]="f['name'].errors && f['name'].touched"
+              [readonly]="!editing"
+            />
+            <div *ngIf="f['name'].errors && f['name'].touched" class="invalid-feedback">
+              <div *ngIf="f['name'].errors['required']">El nombre es requerido</div>
+              <div *ngIf="f['name'].errors['minlength']">El nombre debe tener al menos 2 caracteres</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Correo Electrónico</label>
+            <input
+              type="email"
+              id="email"
+              formControlName="email"
+              class="form-control"
+              [class.is-invalid]="f['email'].errors && f['email'].touched"
+              [readonly]="!editing"
+            />
+            <div *ngIf="f['email'].errors && f['email'].touched" class="invalid-feedback">
+              <div *ngIf="f['email'].errors['required']">El email es requerido</div>
+              <div *ngIf="f['email'].errors['email']">Ingresa un email válido</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="phone">Número de Contacto</label>
+            <input
+              type="tel"
+              id="phone"
+              formControlName="phone"
+              class="form-control"
+              [class.is-invalid]="f['phone'].errors && f['phone'].touched"
+              [readonly]="!editing"
+              placeholder="Ingresa tu número de contacto (opcional)"
+              title="Número de contacto"
+            />
+            <div *ngIf="f['phone'].errors && f['phone'].touched" class="invalid-feedback">
+              <div *ngIf="f['phone'].errors['pattern']">Ingresa un número válido</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Rol</label>
+            <input
+              type="text"
+              class="form-control"
+              [value]="currentUser?.role === 'admin' ? 'Administrador' : 
+                       currentUser?.role === 'teacher' ? 'Maestra' : 'Alumno'"
+              readonly
+              placeholder="Rol de usuario"
+              title="Rol de usuario"
+            />
+          </div>
+
+          <div *ngIf="error" class="alert alert-danger">
+            {{ error }}
+          </div>
+
+          <div *ngIf="success" class="alert alert-success">
+            {{ success }}
+          </div>
+
+          <div class="form-actions">
+            <button 
+              type="button" 
+              class="btn btn-secondary" 
+              (click)="toggleEdit()"
+              *ngIf="!editing"
+            >
+              Editar Perfil
+            </button>
+            
+            <div *ngIf="editing" class="edit-actions">
+              <button type="submit" class="btn btn-primary" [disabled]="loading || profileForm.invalid">
+                {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="toggleEdit()">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

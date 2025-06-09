@@ -1,0 +1,29 @@
+[
+  {
+    "id": "att-1",
+    "studentId": "student-1",
+    "studentName": "Carlos López",
+    "classId": "class-1",
+    "className": "Matemáticas Básicas",
+    "date": "2024-01-15",
+    "present": true
+  },
+  {
+    "id": "att-2",
+    "studentId": "student-2",
+    "studentName": "Ana Rodríguez",
+    "classId": "class-1",
+    "className": "Matemáticas Básicas",
+    "date": "2024-01-15",
+    "present": true
+  },
+  {
+    "id": "att-3",
+    "studentId": "student-3",
+    "studentName": "Luis Martínez",
+    "classId": "class-1",
+    "className": "Matemáticas Básicas",
+    "date": "2024-01-15",
+    "present": false
+  }
+]

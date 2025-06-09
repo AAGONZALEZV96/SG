@@ -1,0 +1,37 @@
+[
+  {
+    "userId": "admin-1",
+    "name": "Administrador Sistema",
+    "email": "admin@sistema.com",
+    "role": "admin",
+    "phone": "123456789"
+  },
+  {
+    "userId": "teacher-1",
+    "name": "María García",
+    "email": "teacher@sistema.com",
+    "role": "teacher",
+    "phone": "987654321"
+  },
+  {
+    "userId": "student-1",
+    "name": "Carlos López",
+    "email": "student@sistema.com",
+    "role": "student",
+    "phone": "456789123"
+  },
+  {
+    "userId": "student-2",
+    "name": "Ana Rodríguez",
+    "email": "ana@estudiante.com",
+    "role": "student",
+    "phone": "789123456"
+  },
+  {
+    "userId": "student-3",
+    "name": "Luis Martínez",
+    "email": "luis@estudiante.com",
+    "role": "student",
+    "phone": "321654987"
+  }
+]

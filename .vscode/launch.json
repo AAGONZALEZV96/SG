@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Flask",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/app.py",
+      "env": {
+        "FLASK_ENV": "development",
+        "IS_OFFLINE": "true",
+        "USERS_TABLE": "users-table-dev",
+        "ATTENDANCE_TABLE": "attendance-table-dev",
+        "GRADES_TABLE": "grades-table-dev"
+      },
+      "args": [],
+      "jinja": true,
+      "justMyCode": true
+    },
+    {
+      "name": "Debug Backend",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/serverless",
+      "args": ["offline", "start"],
+      "env": {
+        "IS_OFFLINE": "true"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "grade-1",
+    "studentId": "student-1",
+    "studentName": "Carlos López",
+    "subject": "Matemáticas",
+    "grade": 8.5,
+    "comment": "Excelente trabajo",
+    "date": "2024-01-10"
+  },
+  {
+    "id": "grade-2",
+    "studentId": "student-1",
+    "studentName": "Carlos López",
+    "subject": "Ciencias",
+    "grade": 9.0,
+    "comment": "Muy bien",
+    "date": "2024-01-12"
+  },
+  {
+    "id": "grade-3",
+    "studentId": "student-2",
+    "studentName": "Ana Rodríguez",
+    "subject": "Matemáticas",
+    "grade": 9.2,
+    "comment": "Excelente",
+    "date": "2024-01-10"
+  },
+  {
+    "id": "grade-4",
+    "studentId": "student-2",
+    "studentName": "Ana Rodríguez",
+    "subject": "Historia",
+    "grade": 8.8,
+    "comment": "Muy buen análisis",
+    "date": "2024-01-11"
+  },
+  {
+    "id": "grade-5",
+    "studentId": "student-3",
+    "studentName": "Luis Martínez",
+    "subject": "Literatura",
+    "grade": 7.5,
+    "comment": "Buen esfuerzo",
+    "date": "2024-01-09"
+  }
+]

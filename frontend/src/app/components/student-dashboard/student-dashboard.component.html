@@ -1,0 +1,96 @@
+<div class="container">
+  <div class="dashboard-header">
+    <h2>Dashboard del Alumno</h2>
+    <p>Bienvenido, {{ currentUser?.name }}</p>
+  </div>
+
+  <div class="dashboard-grid">
+    <!-- Progreso del Curso -->
+    <div class="card progress-card">
+      <h3>Progreso General del Curso</h3>
+      <div class="progress-container">
+        <div class="progress-circle">
+          <div class="progress-text">{{ courseProgress }}%</div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="courseProgress"></div>
+        </div>
+      </div>
+      <p class="progress-description">Has completado {{ courseProgress }}% del curso</p>
+    </div>
+
+    <!-- Asistencia -->
+    <div class="card attendance-card">
+      <h3>Asistencia</h3>
+      <div class="attendance-stats">
+        <div class="attendance-number">
+          <span class="big-number">{{ attendanceCount }}</span>
+          <span class="small-text">/ {{ totalClasses }}</span>
+        </div>
+        <div class="attendance-percentage">
+          <div class="percentage-circle" [style.background]="'conic-gradient(#28a745 ' + attendancePercentage * 3.6 + 'deg, #e9ecef 0deg)'">
+            <div class="percentage-inner">
+              {{ attendancePercentage }}%
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="attendance-description">Clases asistidas este período</p>
+    </div>
+
+    <!-- Últimas Calificaciones -->
+    <div class="card grades-card">
+      <h3>Últimas 5 Calificaciones</h3>
+      <div class="grades-table-container">
+        <table class="grades-table">
+          <thead>
+            <tr>
+              <th>Asignatura</th>
+              <th>Nota</th>
+              <th>Fecha</th>
+              <th>Comentario</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let grade of recentGrades">
+              <td class="subject-cell">{{ grade.subject }}</td>
+              <td class="grade-cell">
+                <span 
+                  class="grade-badge" 
+                  [style.background-color]="getGradeColor(grade.grade)"
+                >
+                  {{ grade.grade }}
+                </span>
+              </td>
+              <td class="date-cell">{{ grade.date | date:'dd/MM/yyyy' }}</td>
+              <td class="comment-cell">{{ grade.comment }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acciones Rápidas -->
+  <div class="card quick-actions">
+    <h3>Acciones Rápidas</h3>
+    <div class="actions-grid">
+      <button class="action-btn" routerLink="/profile">
+        <div class="action-icon">👤</div>
+        <span>Mi Perfil</span>
+      </button>
+      <button class="action-btn" routerLink="/grades">
+        <div class="action-icon">📊</div>
+        <span>Ver Todas las Notas</span>
+      </button>
+      <button class="action-btn" routerLink="/attendance">
+        <div class="action-icon">📅</div>
+        <span>Historial de Asistencia</span>
+      </button>
+      <button class="action-btn" (click)="authService.logout(); router.navigate(['/login'])">
+        <div class="action-icon">🚪</div>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
+  </div>
+</div>
