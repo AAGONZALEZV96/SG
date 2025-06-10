@@ -1,7 +1,7 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: lizzardy
+#org: lizzardy
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
-app: sg-backend
+#app: sg-backend
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: SG
 
@@ -29,7 +29,7 @@ custom:
   pythonRequirements:
     dockerizePip: false
     slim: true
-    strip: false
+    strip: true
 
   # Configuración de LocalStack
   localstack:
@@ -40,9 +40,14 @@ custom:
       - s3
       - lambda
       - sqs
+      - cloudFormation
+      - logs
+      - apigateway
+      - iam
+      
     docker: # Configuración para que el plugin gestione el contenedor Docker de LocalStack
-      enabled: true # Habilita la gestión de Docker por el plugin
-      reuseContainers: true # Reutiliza el contenedor existente para arranques más rápidos
+        enabled: true # Habilita la gestión de Docker por el plugin
+        reuseContainers: true # Reutiliza el contenedor existente para arranques más rápidos
 
 provider:
   name: aws
@@ -89,7 +94,7 @@ functions:
     events: # Eventos que activarán esta función Lambda (HTTP)
       - http:
           # Captura CUALQUIER ruta después de la etapa (ej. /dev/users, /dev/auth/login)
-          path: dev/{proxy+} # <--- ¡IMPORTANTE! El /dev/ es parte de la ruta que Flask recibirá
+          path: /{proxy+} # <--- ¡IMPORTANTE! El /dev/ es parte de la ruta que Flask recibirá
           method: any
           cors: # Configuración CORS para permitir solicitudes desde cualquier origen
             origin: '*'

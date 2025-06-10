@@ -14,7 +14,7 @@ if os.environ.get('IS_OFFLINE'):
     # LocalStack usa un endpoint unificado para todos los servicios
     # Usamos LOCALSTACK_HOSTNAME que pasamos en serverless.yml
     localstack_endpoint = os.environ.get('LOCALSTACK_HOSTNAME', 'localhost')
-    localstack_url = f"http://{localstack_endpoint}:4566" # Puerto por defecto de LocalStack
+    localstack_url = f'http://{localstack_endpoint}:4566' # Puerto por defecto de LocalStack
 
     dynamodb_client = boto3.client(
         'dynamodb',
