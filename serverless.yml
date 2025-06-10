@@ -13,6 +13,44 @@ plugins:
   - serverless-offline
   - serverless-localstack # Plugin para emular AWS con Docker
 
+
+package: # <--- ASEGÚRATE DE QUE ESTA SECCIÓN ESTÉ AL MISMO NIVEL QUE `plugins`, `provider`, `custom`, etc.
+  patterns:
+    # Exclusiones estándar (ya las deberías tener)
+    - '!node_modules/**'
+    - '!venv/**'
+    - '!__pycache__/**'
+    - '!**/__pycache__/**'
+    - '!**/test/**'
+    - '!**/tests/**'
+    - '!**/dist-info/**'
+    - '!**/egg-info/**'
+    - '!**/*.txt'
+    - '!**/*.md'
+    - '!**/*.json'
+    - '!**/*.map'
+    - '!**/*.zip'
+    - '!**/*.bin'
+    - '!**/*.html'
+    - '!**/*.rst'
+    - '!**/*.xml'
+    - '!**/vendor/**'
+    - '!**/docs/**'
+    - '!**/examples/**'
+    - '!**/data/**'
+    - '!**/_*.py'
+    - '!**/scripts/**' # Si scripts es solo JSON y no código Python a desplegar
+
+    # --- ¡AÑADE ESTAS EXCLUSIONES ESPECÍFICAS PARA BOTO3/BOTOCORE! ---
+    - '!botocore/data/**'     # Datos de API de todos los servicios AWS
+    - '!botocore/examples/**' # Ejemplos de uso
+    - '!botocore/docs/**'     # Documentación
+    - '!boto3/docs/**'        # Documentación de boto3
+    - '!jmespath/**'          # Dependencia de boto3/botocore, a veces grande
+    - '!s3transfer/docs/**'   # Dependencia de boto3/botocore
+    - '!urllib3/docs/**'      # Dependencia común, a veces con docs grandes
+    - '!urllib3/contrib/emscripten/**'
+
 custom:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
@@ -27,7 +65,7 @@ custom:
     packRequirements: false # Para que serverless-python-requirements maneje los paquetes
 
   pythonRequirements:
-    dockerizePip: false
+    dockerizePip: true
     slim: true
     strip: true
 

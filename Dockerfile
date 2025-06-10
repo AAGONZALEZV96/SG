@@ -1,26 +1,28 @@
-FROM python:3.12-slim
+# Usa una imagen base oficial de AWS Lambda para Python 3.11
+# Esta imagen ya incluye el Runtime Interface Client (RIC)
+FROM public.ecr.aws/lambda/python:3.11
 
-WORKDIR /app
+# Establece el directorio de trabajo dentro del contenedor
+WORKDIR /var/task
 
-# Install Node.js for Serverless
-RUN apt-get update && apt-get install -y \
-    curl \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+# Copia tu archivo de requisitos de Python y el package.json (para npm install de plugins)
+# Aunque aquí no se usará npm install para la Lambda, es una buena práctica para el contexto del proyecto
+COPY requirements.txt ./
+# COPY package.json ./ # No es necesario para el runtime de Python Lambda
 
-# Copy requirements
-COPY requirements.txt package.json ./
+# Instala las dependencias de Python usando pip (dentro del entorno de la imagen Lambda)
+# El comando RUN pip install -r requirements.txt ya se encarga de instalar Flask, Flask-Cors, boto3
+# --no-cache-dir para reducir el tamaño de la imagen final
+# --upgrade pip para asegurar que pip esté actualizado
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
-# Install Python and Node dependencies
-RUN pip install -r requirements.txt
-RUN npm install
+# Copia tu código de aplicación
+# app.py contiene tu lógica Flask
+# wsgi_handler.py es el manejador que conecta Lambda con Flask
+COPY app.py ./
+COPY wsgi_handler.py ./
 
-# Copy application code
-COPY . .
-
-# Expose port
-EXPOSE 3000
-
-# Start command
-CMD ["npm", "run", "start"]
+# Define el comando que Lambda ejecutará cuando se invoque la función
+# Esto le dice al RIC (Runtime Interface Client) dónde encontrar tu manejador.
+# wsgi_handler.handler es el manejador que serverless-wsgi te proporciona.
+CMD [ "wsgi_handler.handler" ]
