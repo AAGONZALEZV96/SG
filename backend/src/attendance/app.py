@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS
+from mangum import Mangum
 
 # Importa la configuración de la base de datos
 from src.common.db_config import dynamodb_client, ATTENDANCE_TABLE
@@ -95,3 +96,8 @@ def resource_not_found(e):
     print(f"ERROR 404: Ruta no encontrada en Attendance API.")
     print(f"ERROR 404: request.path: {request.path}")
     return make_response(jsonify(error='Not found!'), 404)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+handler = Mangum(app)

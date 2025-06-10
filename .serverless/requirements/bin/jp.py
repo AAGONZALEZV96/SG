@@ -1,4 +1,4 @@
-#!C:\Python313\python.exe
+#!/var/lang/bin/python
 
 import sys
 import json

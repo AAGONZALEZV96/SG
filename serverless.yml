@@ -10,30 +10,20 @@ service: sg # Nombre del servicio en minúsculas para compatibilidad con ECR (si
 frameworkVersion: '3'
 
 plugins:
-  - serverless-wsgi # Necesario para la integración Flask/Lambda Runtime Interface Client
+  # - serverless-wsgi # <--- ¡ELIMINA O COMENTA ESTA LÍNEA!
   - serverless-python-requirements # Para empaquetar dependencias Python en ZIP
   - serverless-offline
-  - serverless-localstack # Plugin para emular AWS con Docker
+  - serverless-localstack
 
-package: # <--- ¡REEMPLAZA TODA ESTA SECCIÓN COMPLETA!
-  individually: true # Empaquetar cada función de Lambda de forma individual
+package:
+  individually: true
   patterns:
-    - '!**/*' # Excluir TODO por defecto (esta es la clave)
-    # --- Incluir solo lo ABSOLUTAMENTE ESENCIAL para el runtime de Lambda ---
-    - 'backend/src/**' # Incluye todo tu código modularizado
-    - 'requirements.txt' # Necesario para serverless-python-requirements
-
-    # --- Incluir solo las carpetas de dependencias generadas por serverless-python-requirements ---
-    # Estas carpetas se crean cuando dockerizePip: true o cuando se empaqueta localmente.
-    # No las crees manualmente, el plugin las genera.
+    - '!**/*'
+    - 'backend/src/**'
+    - 'requirements.txt'
     - '.serverless_requirements/**' # Esto es donde serverless-python-requirements pondrá las dependencias
     - '.serverless/requirements/**' # A veces el plugin usa esta ruta también para dependencias.
 
-    # --- Permisos y archivos específicos que Python/Flask/Boto3 necesitan para el runtime si no están en .serverless_requirements ---
-    # Esto es más un comodín si el plugin no empaqueta todo correctamente
-    - 'bin/**' # Algunos scripts ejecutables que pueden ser necesarios
-    - 'lib/**' # Otras librerías que podrían estar en 'lib' en lugar de 'site-packages'
-    - 'dist-packages/**' # Algunas distribuciones usan esto
 
 custom:
   stage: ${opt:stage, 'dev'}
@@ -43,12 +33,10 @@ custom:
   attendanceTableName: attendance-table-${self:custom.stage}
   gradesTableName: grades-table-${self:custom.stage}
 
-  wsgi:
-    # Esta sección ya no tiene un 'app' general porque cada función ahora tiene su propio 'wsgi.app'
-    packRequirements: false # Para que serverless-python-requirements empaquete las dependencias
+ 
 
   pythonRequirements:
-    dockerizePip: true # <--- ¡MANTÉN ESTO EN TRUE para construir el paquete ZIP en Docker!
+    dockerizePip: true
     slim: true
     strip: true
 
@@ -108,95 +96,86 @@ provider:
     STAGE: ${self:custom.stage}
     LOCALSTACK_HOSTNAME: localhost
 
-functions: # <--- ¡ESTA ES LA SECCIÓN CON TUS MÚLTIPLES LAMBDAS!
+functions: # <--- ¡AQUÍ ESTÁ LA CLAVE!
   # --- Función para la API de Index (/) o /dev ---
   indexApi:
-    handler: backend/src/common/wsgi_handler.handler # Manejador genérico
-    runtime: python3.11
-    memorySize: 128 # Probablemente más ligera
-    events:
-      - http:
-          path: dev # Ruta para el index (ej. /dev)
-          method: get
-          cors: true
-    wsgi:
-      app: backend/src/index/app.app # La instancia Flask para esta función
-
-  # --- Función para la API de Usuarios (users) ---
-  usersApi:
-    handler: backend/src/common/wsgi_handler.handler
-    runtime: python3.11
-    memorySize: 256
-    events:
-      - http:
-          path: dev/users # Ruta base para usuarios (ej. /dev/users)
-          method: get
-          cors: true
-      - http:
-          path: dev/users/{userId} # Ruta para usuario por ID (ej. /dev/users/123)
-          method: get
-          cors: true
-      - http:
-          path: dev/users # Ruta para crear usuario
-          method: post
-          cors: true
-      - http:
-          path: dev/users/{userId} # Ruta para actualizar/eliminar usuario
-          method: put
-          cors: true
-      - http:
-          path: dev/users/{userId} # Ruta para eliminar usuario
-          method: delete
-          cors: true
-    wsgi:
-      app: backend/src/users/app.app # La instancia Flask para esta función
-
-  # --- Función para la API de Autenticación (auth) ---
-  authApi:
-    handler: backend/src/common/wsgi_handler.handler
+    handler: backend.src.index.app.handler # <--- ¡CAMBIO AQUÍ! Apunta directamente a la instancia Flask 'app'
     runtime: python3.11
     memorySize: 128
     events:
       - http:
-          path: dev/auth/login # Ruta para login
+          path: dev
+          method: get
+          cors: true
+
+  # --- Función para la API de Usuarios (users) ---
+  usersApi:
+    handler: backend.src.users.app.handler # <--- ¡CAMBIO AQUÍ!
+    runtime: python3.11
+    memorySize: 256
+    events:
+      - http:
+          path: /users
+          method: get
+          cors: true
+      - http:
+          path: /users/{userId}
+          method: get
+          cors: true
+      - http:
+          path: /users
           method: post
           cors: true
-    wsgi:
-      app: backend/src/auth/app.app
+      - http:
+          path: /users/{userId}
+          method: put
+          cors: true
+      - http:
+          path: /users/{userId}
+          method: delete
+          cors: true
+
+  # --- Continúa para authApi, attendanceApi, gradesApi, cambiando `handler:` a `backend.src.MODULO.app.app` ---
+  authApi:
+    handler: backend.src.auth.app.handler
+    runtime: python3.11
+    memorySize: 128
+    events:
+      - http:
+          path: /auth/login
+          method: post
+          cors: true
 
   # --- Función para la API de Asistencia (attendance) ---
   attendanceApi:
-    handler: backend/src/common/wsgi_handler.handler
+    handler: backend.src.attendance.app.handler
     runtime: python3.11
     memorySize: 256
     events:
       - http:
-          path: dev/attendance # Ruta base para asistencia
+          path: /attendance
           method: get
           cors: true
       - http:
-          path: dev/attendance # Ruta para crear asistencia
+          path: /attendance
           method: post
           cors: true
-    wsgi:
-      app: backend/src/attendance/app.app
 
   # --- Función para la API de Calificaciones (grades) ---
   gradesApi:
-    handler: backend/src/common/wsgi_handler.handler
+    handler: backend.src.grades.app.handler
     runtime: python3.11
     memorySize: 256
     events:
       - http:
-          path: dev/grades # Ruta base para calificaciones
+          path: /grades
           method: get
           cors: true
       - http:
-          path: dev/grades # Ruta para crear calificaciones
+          path: /grades
           method: post
           cors: true
-    wsgi:
-      app: backend/src/grades/app.app
+
 
 
 
