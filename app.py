@@ -9,29 +9,29 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend integration
 
-@app.route('/dev')
-def index():
-    return jsonify({"mensaje": "¡Todo está funcionando con Flask y Serverless!"})
 # DynamoDB configuration
 if os.environ.get('IS_OFFLINE'):
+    # LocalStack usa un endpoint unificado para todos los servicios
+    # Usamos LOCALSTACK_HOSTNAME que pasamos en serverless.yml
     localstack_endpoint = os.environ.get('LOCALSTACK_HOSTNAME', 'localhost')
-    localstack_url = f"http://{localstack_endpoint}:4566"
+    localstack_url = f"http://{localstack_endpoint}:4566" # Puerto por defecto de LocalStack
 
     dynamodb_client = boto3.client(
-        'dynamodb', 
-        region_name='us-east-1', 
-        endpoint_url=localstack_url,
-        aws_access_key_id='test',
-        aws_secret_access_key='test'
+        'dynamodb',
+        region_name='us-east-1', # La región debe coincidir con tu provider en serverless.yml
+        endpoint_url=localstack_url, # <--- ¡APUNTA A LOCALSTACK!
+        aws_access_key_id='test', # Credenciales de prueba de LocalStack
+        aws_secret_access_key='test' # Credenciales de prueba de LocalStack
     )
     dynamodb_resource = boto3.resource(
         'dynamodb',
-        region_name='us-east-1',
-        endpoint_url=localstack_url,
-        aws_access_key_id='test',
-        aws_secret_access_key='test'
+        region_name='us-east-1', # La región debe coincidir con tu provider en serverless.yml
+        endpoint_url=localstack_url, # <--- ¡APUNTA A LOCALSTACK!
+        aws_access_key_id='test', # Credenciales de prueba de LocalStack
+        aws_secret_access_key='test' # Credenciales de prueba de LocalStack
     )
 else:
+    # Esto sigue siendo para el despliegue en la nube real
     dynamodb_client = boto3.client('dynamodb')
     dynamodb_resource = boto3.resource('dynamodb')
 
@@ -40,8 +40,23 @@ USERS_TABLE = os.environ.get('USERS_TABLE', 'users-table-dev')
 ATTENDANCE_TABLE = os.environ.get('ATTENDANCE_TABLE', 'attendance-table-dev')
 GRADES_TABLE = os.environ.get('GRADES_TABLE', 'grades-table-dev')
 
+# --- Rutas de Flask ---
+# ¡IMPORTANTE! Las rutas de Flask NO LLEVAN el prefijo '/dev' aquí,
+# porque ya está especificado en serverless.yml (path: dev/{proxy+}).
+# Flask verá '/users', '/auth/login', etc.
+
+@app.route('/') # Esta ruta corresponderá a http://localhost:3000/dev
+def index():
+    # Líneas de depuración (puedes dejarlas para ver qué Flask ve)
+    print(f"DEBUG: Accediendo a la ruta raíz de Flask.")
+    print(f"DEBUG: request.path: {request.path}")
+    print(f"DEBUG: request.full_path: {request.full_path}")
+    print(f"DEBUG: request.base_url: {request.base_url}")
+    print(f"DEBUG: request.url_root: {request.url_root}")
+    return jsonify({"mensaje": "¡Todo está funcionando con Flask y Serverless!"})
+
 # Users endpoints
-@app.route('/dev/users/<string:user_id>')
+@app.route('/users/<string:user_id>') # Esta ruta corresponderá a http://localhost:3000/dev/users/<ID>
 def get_user(user_id):
     result = dynamodb_client.get_item(
         TableName=USERS_TABLE, Key={'userId': {'S': user_id}}
@@ -51,14 +66,14 @@ def get_user(user_id):
         return jsonify({'error': 'Could not find user with provided "userId"'}), 404
 
     return jsonify({
-        'userId': item.get('userId').get('S'), 
+        'userId': item.get('userId').get('S'),
         'name': item.get('name').get('S'),
         'email': item.get('email', {}).get('S', ''),
         'role': item.get('role', {}).get('S', 'student'),
         'phone': item.get('phone', {}).get('S', '')
     })
 
-@app.route('/dev/users', methods=['GET'])
+@app.route('/users', methods=['GET']) # Esta ruta corresponderá a http://localhost:3000/dev/users
 def get_users():
     result = dynamodb_client.scan(TableName=USERS_TABLE)
     items = result.get('Items', [])
@@ -75,7 +90,7 @@ def get_users():
     
     return jsonify(users)
 
-@app.route('/dev/users', methods=['POST'])
+@app.route('/users', methods=['POST'])
 def create_user():
     data = request.json
     user_id = data.get('userId') or str(uuid.uuid4())
@@ -100,14 +115,14 @@ def create_user():
     dynamodb_client.put_item(TableName=USERS_TABLE, Item=item)
 
     return jsonify({
-        'userId': user_id, 
-        'name': name, 
-        'email': email, 
+        'userId': user_id,
+        'name': name,
+        'email': email,
         'role': role,
         'phone': phone
     })
 
-@app.route('/dev/users/<string:user_id>', methods=['PUT'])
+@app.route('/users/<string:user_id>', methods=['PUT'])
 def update_user(user_id):
     data = request.json
     
@@ -150,7 +165,7 @@ def update_user(user_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/dev/users/<string:user_id>', methods=['DELETE'])
+@app.route('/users/<string:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     try:
         dynamodb_client.delete_item(
@@ -162,7 +177,7 @@ def delete_user(user_id):
         return jsonify({'error': str(e)}), 500
 
 # Authentication endpoint
-@app.route('/dev/auth/login', methods=['POST'])
+@app.route('/auth/login', methods=['POST'])
 def login():
     data = request.json
     email = data.get('email')
@@ -193,7 +208,7 @@ def login():
     })
 
 # Attendance endpoints
-@app.route('/dev/attendance', methods=['GET'])
+@app.route('/attendance', methods=['GET'])
 def get_attendance():
     student_id = request.args.get('studentId')
     date = request.args.get('date')
@@ -238,7 +253,7 @@ def get_attendance():
     
     return jsonify(attendance_records)
 
-@app.route('/dev/attendance', methods=['POST'])
+@app.route('/attendance', methods=['POST'])
 def create_attendance():
     data = request.json
     attendance_id = str(uuid.uuid4())
@@ -273,7 +288,7 @@ def create_attendance():
     })
 
 # Grades endpoints
-@app.route('/dev/grades', methods=['GET'])
+@app.route('/grades', methods=['GET'])
 def get_grades():
     student_id = request.args.get('studentId')
     subject = request.args.get('subject')
@@ -285,7 +300,7 @@ def get_grades():
             KeyConditionExpression='studentId = :studentId AND subject = :subject',
             ExpressionAttributeValues={
                 ':studentId': {'S': student_id},
-                ':subject': {'S': subject}
+                ':subject': {'S': subject} # Corregido: usar variable 'subject'
             }
         )
     elif student_id:
@@ -314,7 +329,7 @@ def get_grades():
     
     return jsonify(grades)
 
-@app.route('/dev/grades', methods=['POST'])
+@app.route('/grades', methods=['POST'])
 def create_grade():
     data = request.json
     grade_id = str(uuid.uuid4())
@@ -349,6 +364,12 @@ def create_grade():
 
 @app.errorhandler(404)
 def resource_not_found(e):
+    # Líneas de depuración (puedes dejarlas para ver qué Flask ve)
+    print(f"ERROR 404: Ruta no encontrada.")
+    print(f"ERROR 404: request.path: {request.path}")
+    print(f"ERROR 404: request.full_path: {request.full_path}")
+    print(f"ERROR 404: request.base_url: {request.base_url}")
+    print(f"ERROR 404: request.url_root: {request.url_root}")
     return make_response(jsonify(error='Not found!'), 404)
 
 if __name__ == '__main__':

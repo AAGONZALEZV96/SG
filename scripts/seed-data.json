@@ -1,37 +1,59 @@
-[
-  {
-    "userId": "admin-1",
-    "name": "Administrador Sistema",
-    "email": "admin@sistema.com",
-    "role": "admin",
-    "phone": "123456789"
-  },
-  {
-    "userId": "teacher-1",
-    "name": "María García",
-    "email": "teacher@sistema.com",
-    "role": "teacher",
-    "phone": "987654321"
-  },
-  {
-    "userId": "student-1",
-    "name": "Carlos López",
-    "email": "student@sistema.com",
-    "role": "student",
-    "phone": "456789123"
-  },
-  {
-    "userId": "student-2",
-    "name": "Ana Rodríguez",
-    "email": "ana@estudiante.com",
-    "role": "student",
-    "phone": "789123456"
-  },
-  {
-    "userId": "student-3",
-    "name": "Luis Martínez",
-    "email": "luis@estudiante.com",
-    "role": "student",
-    "phone": "321654987"
-  }
-]
+{
+  "users-table-dev": [
+    {
+      "PutRequest": {
+        "Item": {
+          "userId": { "S": "admin-1" },
+          "name": { "S": "Administrador Sistema" },
+          "email": { "S": "admin@sistema.com" },
+          "role": { "S": "admin" },
+          "phone": { "S": "123456789" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "userId": { "S": "teacher-1" },
+          "name": { "S": "María García" },
+          "email": { "S": "teacher@sistema.com" },
+          "role": { "S": "teacher" },
+          "phone": { "S": "987654321" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "userId": { "S": "student-1" },
+          "name": { "S": "Carlos López" },
+          "email": { "S": "student@sistema.com" },
+          "role": { "S": "student" },
+          "phone": { "S": "456789123" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "userId": { "S": "student-2" },
+          "name": { "S": "Ana Rodríguez" },
+          "email": { "S": "ana@estudiante.com" },
+          "role": { "S": "student" },
+          "phone": { "S": "789123456" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "userId": { "S": "student-3" },
+          "name": { "S": "Luis Martínez" },
+          "email": { "S": "luis@estudiante.com" },
+          "role": { "S": "student" },
+          "phone": { "S": "321654987" }
+        }
+      }
+    }
+  ]
+}

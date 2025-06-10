@@ -10,50 +10,48 @@ frameworkVersion: '3'
 plugins:
   - serverless-wsgi
   - serverless-python-requirements
-  - serverless-dynamodb #se elimina
   - serverless-offline
-  - serverless-localstack # queda
+  - serverless-localstack # Plugin para emular AWS con Docker
+
 custom:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
 
-  # Table names
+  # Table names (Nombres de las tablas de DynamoDB)
   usersTableName: users-table-${self:custom.stage}
   attendanceTableName: attendance-table-${self:custom.stage}
   gradesTableName: grades-table-${self:custom.stage}
 
   wsgi:
-    app: app.app
-    packRequirements: false
+    app: app.app # Apunta a la instancia de tu aplicación Flask en app.py
+    packRequirements: false # Para que serverless-python-requirements maneje los paquetes
 
   pythonRequirements:
     dockerizePip: false
     slim: true
     strip: false
 
-
+  # Configuración de LocalStack
   localstack:
-    host: http://localhost
-    port: 4566
-    services:
+    host: http://localhost # Host donde LocalStack expone sus servicios (puede ser 127.0.0.1)
+    debug: true # Muestra logs detallados de LocalStack
+    services: # Servicios de AWS que LocalStack debe emular
       - dynamodb
-        -s3
-        -lambda
-        -sqs
-      docker:
-        enabled: true
-        reuseContainers: true
-    
-    
+      - s3
+      - lambda
+      - sqs
+    docker: # Configuración para que el plugin gestione el contenedor Docker de LocalStack
+      enabled: true # Habilita la gestión de Docker por el plugin
+      reuseContainers: true # Reutiliza el contenedor existente para arranques más rápidos
 
 provider:
   name: aws
   runtime: python3.11
   stage: ${self:custom.stage}
   region: ${self:custom.region}
-  timeout: 30
-  memorySize: 512
-  iam:
+  timeout: 30 # Tiempo máximo de ejecución para tu Lambda (en segundos)
+  memorySize: 512 # Memoria asignada a tu Lambda (en MB)
+  iam: # Permisos que tu Lambda necesitará en AWS (para DynamoDB)
     role:
       statements:
         - Effect: Allow
@@ -65,9 +63,10 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
           Resource:
-            - Fn::GetAtt: [UsersTable, Arn]
-            - Fn::GetAtt: [AttendanceTable, Arn]
-            - Fn::GetAtt: [GradesTable, Arn]
+            - Fn::GetAtt: [UsersTable, Arn] # Permiso para la tabla de usuarios
+            - Fn::GetAtt: [AttendanceTable, Arn] # Permiso para la tabla de asistencia
+            - Fn::GetAtt: [GradesTable, Arn] # Permiso para la tabla de calificaciones
+            # Permisos para los índices globales secundarios (GSI) si usas query con ellos
             - Fn::Join:
               - "/"
               - - Fn::GetAtt: [AttendanceTable, Arn]
@@ -76,36 +75,23 @@ provider:
               - "/"
               - - Fn::GetAtt: [GradesTable, Arn]
                 - "index/*"
-  environment:
+  environment: # Variables de entorno disponibles en tu función Lambda
     USERS_TABLE: ${self:custom.usersTableName}
     ATTENDANCE_TABLE: ${self:custom.attendanceTableName}
     GRADES_TABLE: ${self:custom.gradesTableName}
-    IS_OFFLINE: "true"
+    IS_OFFLINE: "true" # Indica a tu app.py que está en modo offline
     STAGE: ${self:custom.stage}
-    LOCALSTACK_HOSTNAME: localhost
+    LOCALSTACK_HOSTNAME: localhost # Host para que tu app.py se conecte a LocalStack
 
 functions:
-  api:
-    handler: wsgi_handler.handler
-    events:
-
+  api: # Define tu función Lambda principal
+    handler: wsgi_handler.handler # El handler del plugin serverless-wsgi
+    events: # Eventos que activarán esta función Lambda (HTTP)
       - http:
-          path: /dev # Si quieres que el índice responda en /dev, o ajusta a /dev para que Flask lo vea.
-          method: get
-          cors:
-            origin: '*'
-            headers:
-              - Content-Type
-              - X-Amz-Date
-              - Authorization
-              - X-Api-Key
-              - X-Amz-Security-Token
-              - X-Amz-User-Agent
-            allowCredentials: false
-      - http:
-          path: /{proxy+}
+          # Captura CUALQUIER ruta después de la etapa (ej. /dev/users, /dev/auth/login)
+          path: dev/{proxy+} # <--- ¡IMPORTANTE! El /dev/ es parte de la ruta que Flask recibirá
           method: any
-          cors:
+          cors: # Configuración CORS para permitir solicitudes desde cualquier origen
             origin: '*'
             headers:
               - Content-Type
@@ -116,7 +102,7 @@ functions:
               - X-Amz-User-Agent
             allowCredentials: false
 
-resources:
+resources: # Definición de tus recursos de AWS (tablas DynamoDB)
   Resources:
     UsersTable:
       Type: AWS::DynamoDB::Table
@@ -127,7 +113,7 @@ resources:
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
+        BillingMode: PAY_PER_REQUEST # Modo de facturación (PAY_PER_REQUEST para dev es común)
         TableName: ${self:custom.usersTableName}
 
     AttendanceTable:
@@ -143,7 +129,7 @@ resources:
         KeySchema:
           - AttributeName: id
             KeyType: HASH
-        GlobalSecondaryIndexes:
+        GlobalSecondaryIndexes: # Índices secundarios globales
           - IndexName: StudentDateIndex
             KeySchema:
               - AttributeName: studentId
@@ -180,7 +166,7 @@ resources:
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.gradesTableName}
 
-  Outputs:
+  Outputs: # Salidas de CloudFormation (útiles para despliegues reales)
     UsersTableName:
       Value: ${self:custom.usersTableName}
       Export:
