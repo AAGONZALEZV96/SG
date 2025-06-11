@@ -245,7 +245,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/sg/dev/1749591419355-2025-06-10T21:36:59.355Z/sg.zip"
+          "S3Key": "serverless/sg/dev/1749600481590-2025-06-11T00:08:01.590Z/sg.zip"
         },
         "Handler": "backend.src.index.app.handler",
         "Runtime": "python3.11",
@@ -280,7 +280,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/sg/dev/1749591419355-2025-06-10T21:36:59.355Z/sg.zip"
+          "S3Key": "serverless/sg/dev/1749600481590-2025-06-11T00:08:01.590Z/sg.zip"
         },
         "Handler": "backend.src.users.app.handler",
         "Runtime": "python3.11",
@@ -315,7 +315,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/sg/dev/1749591419355-2025-06-10T21:36:59.355Z/sg.zip"
+          "S3Key": "serverless/sg/dev/1749600481590-2025-06-11T00:08:01.590Z/sg.zip"
         },
         "Handler": "backend.src.auth.app.handler",
         "Runtime": "python3.11",
@@ -350,7 +350,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/sg/dev/1749591419355-2025-06-10T21:36:59.355Z/sg.zip"
+          "S3Key": "serverless/sg/dev/1749600481590-2025-06-11T00:08:01.590Z/sg.zip"
         },
         "Handler": "backend.src.attendance.app.handler",
         "Runtime": "python3.11",
@@ -385,7 +385,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/sg/dev/1749591419355-2025-06-10T21:36:59.355Z/sg.zip"
+          "S3Key": "serverless/sg/dev/1749600481590-2025-06-11T00:08:01.590Z/sg.zip"
         },
         "Handler": "backend.src.grades.app.handler",
         "Runtime": "python3.11",
@@ -1350,7 +1350,7 @@
         "GradesApiLambdaPermissionApiGateway"
       ]
     },
-    "ApiGatewayDeployment1749591358574": {
+    "ApiGatewayDeployment1749600397951": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
