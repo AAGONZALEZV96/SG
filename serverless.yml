@@ -1,45 +1,25 @@
-# serverless.yml
+# serverless.yml - VERSIÓN FINAL CON LAMBDA LAYERS (ESTRUCTURA CORREGIDA)
 
-# "org" ensures this Service is used with the correct Serverless Framework Access Key.
-#org: lizzardy # Comentado para evitar errores del Dashboard Plugin en LocalStack
-# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
-#app: sg-backend # Comentado para evitar errores del Dashboard Plugin en LocalStack
-# "service" is the name of this project. This will also be added to your AWS resource names.
-service: sg # Nombre del servicio en minúsculas para compatibilidad con ECR (si se usara) y naming conventions
-
+service: sg
 frameworkVersion: '3'
 
 plugins:
-  # - serverless-wsgi # <--- ¡ELIMINA O COMENTA ESTA LÍNEA!
-  - serverless-python-requirements # Para empaquetar dependencias Python en ZIP
+  - serverless-python-requirements
   - serverless-offline
   - serverless-localstack
-
-package:
-  individually: false
-  patterns:
-    - '!**/*'
-    - 'backend/src/**'
-    - 'requirements.txt'
-    - '.serverless_requirements/**' # Esto es donde serverless-python-requirements pondrá las dependencias
-    - '.serverless/requirements/**' # A veces el plugin usa esta ruta también para dependencias.
-
 
 custom:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
-
   usersTableName: users-table-${self:custom.stage}
   attendanceTableName: attendance-table-${self:custom.stage}
   gradesTableName: grades-table-${self:custom.stage}
-
- 
-
+  
+  # La configuración para el plugin debe estar aquí, en 'custom'
   pythonRequirements:
     dockerizePip: false
-    slim: true
-    strip: true
-
+    layer: true # ¡Esta es la clave! Le dice al plugin que cree una Layer.
+  
   localstack:
     host: http://localhost
     debug: true
@@ -47,27 +27,24 @@ custom:
       - dynamodb
       - s3
       - lambda
-      - sqs
       - cloudformation
       - logs
       - apigateway
       - iam
-      
     docker:
       enabled: true
       reuseContainers: true
 
 provider:
   name: aws
-  runtime: python3.11 # El runtime para tus Lambdas (se empaquetarán como ZIPs)
+  runtime: python3.11
   stage: ${self:custom.stage}
   region: ${self:custom.region}
   timeout: 30
-  memorySize: 512 # Puedes ajustar la memoria por función si es necesario
+  memorySize: 512
   iam:
     role:
       statements:
-        # Los permisos de IAM para todas las tablas pueden ir en un solo rol si todas las Lambdas los necesitan.
         - Effect: Allow
           Action:
             - dynamodb:Query
@@ -77,17 +54,11 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
           Resource:
-            - Fn::GetAtt: [UsersTable, Arn]
-            - Fn::GetAtt: [AttendanceTable, Arn]
-            - Fn::GetAtt: [GradesTable, Arn]
-            - Fn::Join:
-              - "/"
-              - - Fn::GetAtt: [AttendanceTable, Arn]
-                - "index/*"
-            - Fn::Join:
-              - "/"
-              - - Fn::GetAtt: [GradesTable, Arn]
-                - "index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:000000000000:table/${self:custom.usersTableName}"
+            - "arn:aws:dynamodb:${self:provider.region}:000000000000:table/${self:custom.attendanceTableName}"
+            - "arn:aws:dynamodb:${self:provider.region}:000000000000:table/${self:custom.gradesTableName}"
+            - "arn:aws:dynamodb:${self:provider.region}:000000000000:table/${self:custom.attendanceTableName}/index/*"
+            - "arn:aws:dynamodb:${self:provider.region}:000000000000:table/${self:custom.gradesTableName}/index/*"
   environment:
     USERS_TABLE: ${self:custom.usersTableName}
     ATTENDANCE_TABLE: ${self:custom.attendanceTableName}
@@ -95,107 +66,95 @@ provider:
     IS_OFFLINE: "true"
     STAGE: ${self:custom.stage}
     LOCALSTACK_HOSTNAME: localhost
+  
+  # Adjuntamos la capa que el plugin crea automáticamente a TODAS las funciones.
+  # El plugin la nombra 'PythonRequirementsLambdaLayer' por defecto.
+  layers:
+    - {Ref: PythonRequirementsLambdaLayer}
 
-functions: # <--- ¡AQUÍ ESTÁ LA CLAVE!
-  # --- Función para la API de Index (/) o /dev ---
+package:
+  individually: true
+
+functions:
   indexApi:
-    handler: backend.src.index.app.handler # <--- ¡CAMBIO AQUÍ! Apunta directamente a la instancia Flask 'app'
-    runtime: python3.11
+    handler: backend.src.index.app.handler
     memorySize: 128
     events:
       - http:
-          path: dev
+          path: 'dev'
           method: get
           cors: true
+    package:
+      patterns:
+        - backend/src/index/app.py
+        - backend/src/common/**
 
-  # --- Función para la API de Usuarios (users) ---
   usersApi:
-    handler: backend.src.users.app.handler # <--- ¡CAMBIO AQUÍ!
-    runtime: python3.11
+    handler: backend.src.users.app.handler
     memorySize: 256
     events:
-      - http:
-          path: /users
-          method: get
-          cors: true
-      - http:
-          path: /users/{userId}
-          method: get
-          cors: true
-      - http:
-          path: /users
-          method: post
-          cors: true
-      - http:
-          path: /users/{userId}
-          method: put
-          cors: true
-      - http:
-          path: /users/{userId}
-          method: delete
-          cors: true
+      - http: { path: 'dev/users', method: get, cors: true }
+      - http: { path: 'dev/users/{userId}', method: get, cors: true }
+      - http: { path: 'dev/users', method: post, cors: true }
+      - http: { path: 'dev/users/{userId}', method: put, cors: true }
+      - http: { path: 'dev/users/{userId}', method: delete, cors: true }
+    package:
+      patterns:
+        - backend/src/users/app.py
+        - backend/src/common/**
 
-  # --- Continúa para authApi, attendanceApi, gradesApi, cambiando `handler:` a `backend.src.MODULO.app.app` ---
   authApi:
     handler: backend.src.auth.app.handler
-    runtime: python3.11
     memorySize: 128
     events:
-      - http:
-          path: /auth/login
-          method: post
-          cors: true
+      - http: { path: 'dev/auth/login', method: post, cors: true }
+    package:
+      patterns:
+        - backend/src/auth/app.py
+        - backend/src/common/**
 
-  # --- Función para la API de Asistencia (attendance) ---
   attendanceApi:
     handler: backend.src.attendance.app.handler
-    runtime: python3.11
     memorySize: 256
     events:
-      - http:
-          path: /attendance
-          method: get
-          cors: true
-      - http:
-          path: /attendance
-          method: post
-          cors: true
+      - http: { path: 'dev/attendance', method: get, cors: true }
+      - http: { path: 'dev/attendance', method: post, cors: true }
+    package:
+      patterns:
+        - backend/src/attendance/app.py
+        - backend/src/common/**
 
-  # --- Función para la API de Calificaciones (grades) ---
   gradesApi:
     handler: backend.src.grades.app.handler
-    runtime: python3.11
     memorySize: 256
     events:
-      - http:
-          path: /grades
-          method: get
-          cors: true
-      - http:
-          path: /grades
-          method: post
-          cors: true
+      - http: { path: 'dev/grades', method: get, cors: true }
+      - http: { path: 'dev/grades', method: post, cors: true }
+    package:
+      patterns:
+        - backend/src/grades/app.py
+        - backend/src/common/**
 
+# Ya no necesitamos la sección 'layers:' aquí porque el plugin la crea por nosotros.
 
-
-
-resources: # Definición de tus recursos de AWS (tablas DynamoDB)
+resources:
   Resources:
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:
+        TableName: ${self:custom.usersTableName}
         AttributeDefinitions:
           - AttributeName: userId
             AttributeType: S
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
-        BillingMode: PAY_PER_REQUEST # Modo de facturación (PAY_PER_REQUEST para dev es común)
-        TableName: ${self:custom.usersTableName}
+        BillingMode: PAY_PER_REQUEST
 
     AttendanceTable:
       Type: AWS::DynamoDB::Table
       Properties:
+        TableName: ${self:custom.attendanceTableName}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -206,7 +165,7 @@ resources: # Definición de tus recursos de AWS (tablas DynamoDB)
         KeySchema:
           - AttributeName: id
             KeyType: HASH
-        GlobalSecondaryIndexes: # Índices secundarios globales
+        GlobalSecondaryIndexes:
           - IndexName: StudentDateIndex
             KeySchema:
               - AttributeName: studentId
@@ -216,11 +175,11 @@ resources: # Definición de tus recursos de AWS (tablas DynamoDB)
             Projection:
               ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
-        TableName: ${self:custom.attendanceTableName}
 
     GradesTable:
       Type: AWS::DynamoDB::Table
       Properties:
+        TableName: ${self:custom.gradesTableName}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -241,33 +200,3 @@ resources: # Definición de tus recursos de AWS (tablas DynamoDB)
             Projection:
               ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
-        TableName: ${self:custom.gradesTableName}
-
-  Outputs: # Salidas de CloudFormation (útiles para despliegues reales)
-    UsersTableName:
-      Value: ${self:custom.usersTableName}
-      Export:
-        Name: ${self:service}-${self:custom.stage}-UsersTableName
-    
-    AttendanceTableName:
-      Value: ${self:custom.attendanceTableName}
-      Export:
-        Name: ${self:service}-${self:custom.stage}-AttendanceTableName
-    
-    GradesTableName:
-      Value: ${self:custom.gradesTableName}
-      Export:
-        Name: ${self:service}-${self:custom.stage}-GradesTableName
-    
-    ApiUrl:
-      Value:
-        Fn::Join:
-          - ""
-          - - "https://"
-            - Ref: ApiGatewayRestApi
-            - ".execute-api."
-            - ${self:custom.region}
-            - ".amazonaws.com/"
-            - ${self:custom.stage}
-      Export:
-        Name: ${self:service}-${self:custom.stage}-ApiUrl
